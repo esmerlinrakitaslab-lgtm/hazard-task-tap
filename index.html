@@ -1,0 +1,1006 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Hazard Tap Task</title>
+<style>
+/* Layout concept: one fixed dark look so every phone and the projector laptop render the same. */
+:root{
+  color-scheme:dark;
+  --bg:#0d1117; --surface:#161c26; --surface-2:#1f2733; --line:#2a3342;
+  --text:#e6ebf2; --muted:#9aa6b6; --accent:#5aa9ff; --accent-ink:#04101d;
+  --hazard:#c8353b; --hazard-hi:#e5575d; --ok:#3fcf8e; --warn:#f2b94b;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  background:var(--bg);color:var(--text);font:16px/1.5 var(--sans);
+  padding-block:12px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;user-select:none;overflow-x:hidden;
+}
+textarea,input{-webkit-user-select:text;user-select:text}
+#app{min-height:100%;display:flex;flex-direction:column}
+.wrap{width:100%;max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding-block:8px}
+.wrap.center{justify-content:center;flex:1}
+h1{font-size:1.75rem;line-height:1.2;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:1.05rem;margin:0}
+p,ol,ul,dl,dd{margin:0}
+ol,ul{padding-left:1.25rem;display:flex;flex-direction:column;gap:6px}
+.muted{color:var(--muted)} .small{font-size:.875rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface-2);color:var(--text);font:inherit;font-weight:600;padding:12px 16px;border-radius:10px;min-height:48px;cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.big{min-height:56px;font-size:1.05rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.reply:focus-visible,.bigbtn:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;appearance:none;border:0;background:var(--surface);color:var(--muted);font:inherit;font-weight:600;padding:10px;min-height:44px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tabs{display:flex;gap:8px}
+.tabs .btn{flex:1}
+.tabs .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+label{font-weight:600;font-size:.95rem}
+.field{display:flex;flex-direction:column;gap:6px}
+input[type=number],input[type=text],input[type=file],textarea{width:100%;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:16px;min-width:0}
+textarea{font-family:var(--mono);font-size:13px;line-height:1.4;resize:vertical}
+.check{display:flex;gap:12px;align-items:flex-start;font-weight:400}
+.check input{width:26px;height:26px;margin-top:2px;flex:none;accent-color:var(--accent)}
+.err{color:var(--warn)} .ok{color:var(--ok)}
+.checks{font-size:.9rem}
+.qrrow{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.qr{background:#fff;padding:10px;border-radius:8px;width:180px;height:180px;flex:none;display:grid;place-items:center}
+.qr img,.qr canvas{width:100%;height:auto}
+.qrbig{background:#fff;padding:16px}
+.link{font-family:var(--mono);font-size:.85rem;word-break:break-all;-webkit-user-select:text;user-select:text}
+.run{width:100%;flex:1;display:flex;flex-direction:column;gap:12px}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.875rem}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.bigbtn{appearance:none;flex:1;min-height:58vh;border:0;border-radius:20px;font:inherit;font-weight:800;font-size:clamp(1.6rem,8vw,2.6rem);letter-spacing:.04em;color:#fff;cursor:pointer;padding:16px;text-wrap:balance}
+.bigbtn.hazard{background:var(--hazard)}
+.bigbtn.hazard.hit,.bigbtn.hazard:active{background:var(--hazard-hi)}
+.bigbtn.sync{background:var(--accent);color:var(--accent-ink);font-size:clamp(1.3rem,6vw,2rem)}
+.bigbtn.small{flex:none;min-height:120px}
+#notice{position:fixed;z-index:20;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 8px);max-width:600px;margin:0 auto}
+.msg{display:flex;gap:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 8px 28px rgba(0,0,0,.55)}
+.avatar{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800}
+.msg .body{flex:1;min-width:0}
+.msg .from{font-weight:700;font-size:.875rem;color:var(--muted)}
+.msg .text{font-size:1.05rem;margin-top:2px}
+.replies{display:flex;gap:8px;margin-top:10px}
+.reply{appearance:none;flex:1;min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit;font-weight:700;cursor:pointer}
+.tablebox{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.875rem;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;background:var(--surface)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px}
+dt{color:var(--muted)} dd{font-variant-numeric:tabular-nums}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+summary{cursor:pointer;font-weight:600}
+#stage{position:fixed;inset:0;z-index:50;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+#stage video,#stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+#stageText{position:relative;z-index:2;padding:24px;display:flex;flex-direction:column;gap:16px;align-items:center}
+.count{font-size:clamp(6rem,30vw,18rem);font-weight:800;line-height:1}
+.cue{font-size:clamp(4rem,18vw,12rem);font-weight:900;color:#000;letter-spacing:.04em}
+.stage-x{position:absolute;top:12px;right:12px;z-index:3;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.4);color:#fff;font-size:24px;line-height:1;cursor:pointer;opacity:.35}
+.stage-x:hover,.stage-x:focus-visible{opacity:1}
+@media (prefers-reduced-motion:no-preference){.bigbtn,.btn{transition:background-color .08s}}
+</style>
+
+<div id="app"></div>
+<div id="notice" hidden></div>
+<div id="stage" hidden>
+  <button class="stage-x" data-act="hostStop" aria-label="Stop and go back">&times;</button>
+  <video id="vid" playsinline preload="auto" hidden></video>
+  <canvas id="cv" hidden></canvas>
+  <div id="stageText"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+'use strict';
+/* ====================================================================
+   SETTINGS: the group edits this block, then reuses the same file everywhere.
+   All times are in seconds. Hazard and message times count from the start
+   of the footage (not from the white flash).
+   After any edit, open the projector page: the "Settings check" box lists
+   any mistakes it finds (overlaps, times past the end, unbalanced sets).
+   ==================================================================== */
+// Message wording. Keep every message unrelated to the road. Each needs two replies.
+// Messages are used in time order, one after another, for each set.
+const MSG=[
+  {from:'Sam',text:'Are you free later today?',replies:['Yes','No']},
+  {from:'Sam',text:'Did you eat yet?',replies:['Yes','No']},
+  {from:'Sam',text:'Want to get coffee after?',replies:['Sure',"Can't"]},
+  {from:'Sam',text:'Did you finish the reading?',replies:['Yes','Not yet']},
+  {from:'Sam',text:'Can you send me the notes?',replies:['Okay','Later']},
+  {from:'Sam',text:'Are you coming to the meeting?',replies:['Yes','No']},
+  {from:'Sam',text:'Is it cold where you are?',replies:['Yes','No']},
+  {from:'Sam',text:'Need anything from the store?',replies:['Yes','No']},
+  {from:'Sam',text:'Did you see my last message?',replies:['Yes','No']},
+  {from:'Sam',text:'Call me when you can?',replies:['Okay','Later']},
+  {from:'Sam',text:'Did you get my email?',replies:['Yes','No']},
+  {from:'Sam',text:'Are we still on for Friday?',replies:['Yes','Maybe']},
+  {from:'Sam',text:'Can I borrow your charger?',replies:['Sure','No']},
+  {from:'Sam',text:'What time is class tomorrow?',replies:['9 am','Not sure']},
+  {from:'Sam',text:'Did you watch the game?',replies:['Yes','No']},
+  {from:'Sam',text:'Pizza or tacos tonight?',replies:['Pizza','Tacos']}
+];
+// Google Sheet that stores results. Paste the Web app link from Apps Script here (it ends in /exec).
+// Leave it as '' and phones show a results code to copy instead.
+const SHEET_URL='https://script.google.com/macros/s/AKfycbyfO5YoWfg4EeJXdkAlVjZnCIJmMR77lhVTx_1-8InNFI97H-q-Ef8iSEV07Og5TB_0/exec';
+// Link participants open (shown as a QR code on the projector page). Put your hosted link here,
+// for example 'https://your-site.netlify.app/'. Leave it as '' to use the address the projector laptop has open.
+const PAGE_URL='https://esmerlinrakitaslab-lgtm.github.io/hazard-task-tap/';
+const sched=times=>times.slice().sort((x,y)=>x-y).map((t,i)=>Object.assign({t:t},MSG[i%MSG.length]));
+/* Which video and block design the class session uses. It must match the video file you load.
+   '2332'  2 min no phone, 3 min phone, 3 min no phone, 2 min phone (everyone the same order)
+   '55'    5 min + 5 min: odd numbers get the phone block first, even numbers get it second
+   'clt55' same 5 + 5 design with the Charlotte city video (hazard_video_charlotte_55.mp4)
+   Blocks are [start, end, phone] with phone 1 = messages arrive, 0 = no messages.
+   joins are the times where two pieces of the drive meet in the video (no hazards near them). */
+const DESIGN='clt55';
+const DESIGNS={
+  '2332':{
+    label:'Class session (2-3-3-2)',
+    video:'hazard_video_2332.mp4',
+    footageLength:600,
+    joins:[120,300,480],
+    // Hazard start times estimated by Claude from the frames. Have two coders check them.
+    hazards:[29.9,69.0,134.4,265.5,378.4,456.8,504.0,579.4],
+    blocks:{A:[[0,120,0],[120,300,1],[300,480,0],[480,600,1]],
+            B:[[0,120,0],[120,300,1],[300,480,0],[480,600,1]]},
+    // Messages only in phone blocks, about every 25 s; 4 of them arrive 1.5 s before a hazard.
+    messages:{A:[132.9,160,188,214,240,264,288, 486,502.5,528,552,577.9],
+              B:[132.9,160,188,214,240,264,288, 486,502.5,528,552,577.9]}
+  },
+  '55':{
+    label:'Class session (5+5)',
+    video:'hazard_video_55.mp4',
+    footageLength:600,
+    joins:[300],
+    hazards:[31.9,106.9,219.8,282.1,319.8,427.0,452.0,589.0],
+    blocks:{A:[[0,300,1],[300,600,0]],     // odd numbers: phone first
+            B:[[0,300,0],[300,600,1]]},    // even numbers: phone second
+    messages:{A:[10,30.4,55,80,105.4,130,155,180,200,218.3,245,262,280.6],
+              B:[306,318.3,345,370,395,425.5,450.5,475,500,525,545,565,587.5]}
+  },
+  'clt55':{
+    // Downtown Charlotte drive, red-light waits shortened. 10 hazards, 5 in each half.
+    label:'Class session (Charlotte 5+5)',
+    video:'hazard_video_charlotte_55.mp4',
+    footageLength:600,
+    joins:[245.8,285.4,430.0,483.6,531.8],
+    hazards:[78.8,154.5,184.9,265.9,276.1,311.7,492.6,520.4,542.6,568.4],
+    blocks:{A:[[0,300,1],[300,600,0]],     // odd numbers: phone first
+            B:[[0,300,0],[300,600,1]]},    // even numbers: phone second
+    messages:{A:[12,35,55,77.3,100,125,140,183.4,205,228,245,264.4,290],
+              B:[310.2,330,352,375,400,425,450,470,491.1,508,525,541.1,585]}
+  }
+};
+const DZ=DESIGNS[DESIGN];
+const MODES={
+  real:{
+    label:DZ.label,
+    video:DZ.video,
+    joins:DZ.joins,
+    blocks:DZ.blocks,
+    draft:true,               // Change to false after two coders confirm the hazard times.
+    leadIn:5,                 // seconds between the white flash and the first frame of footage
+    footageLength:DZ.footageLength,   // the projector page checks this against the video file
+    familiarize:0,
+    hazards:DZ.hazards,
+    hitWindow:[0.2,3.0],      // a tap counts as "found" this long after a hazard starts
+    noticeSeconds:6,          // how long each message stays on screen if not answered
+    schedules:{A:sched(DZ.messages.A),B:sched(DZ.messages.B)}   // A = odd numbers, B = even numbers
+  },
+  rehearsal:{
+    label:'Rehearsal',
+    leadIn:2,footageLength:40,familiarize:0,hazards:[8,17,28,36],hitWindow:[0.2,3.0],noticeSeconds:6,
+    blocks:{A:[[0,20,0],[20,40,1]],B:[[0,20,1],[20,40,0]]},
+    schedules:{A:sched([24,32]),B:sched([4,12])}
+  }
+};
+/* ==================================================================== */
+
+/* Is time t inside a phone block for this set? Without blocks, "phone" means a message is on screen. */
+function phoneAt(c,set,t){
+  if(c.blocks)return (c.blocks[set]||[]).some(b=>b[2]&&t>=b[0]&&t<b[1]);
+  return (c.schedules[set]||[]).some(m=>t>=m.t&&t<=m.t+c.noticeSeconds);
+}
+/* Settings check: plain-language warnings shown on the projector page. */
+function checkSettings(c){
+  const out=[],warn=t=>out.push({bad:true,t:t}),ok=t=>out.push({bad:false,t:t});
+  const H=c.hazards,L=c.footageLength,w=c.hitWindow;
+  if(c.draft)warn('These are draft timings. Replace them with your marked hazard times, then set draft to false.');
+  if(!(w[0]>=0&&w[1]>w[0]))warn('The hit window should be two numbers, the first smaller than the second.');
+  for(let i=1;i<H.length;i++)if(H[i]<=H[i-1])warn('Hazard times must go from earliest to latest (check hazard '+(i+1)+').');
+  const F=c.familiarize||0;
+  H.forEach((h,i)=>{if(F&&h<F)warn('Hazard '+(i+1)+' starts at '+h+' s, inside the first '+F+' s, which should have no hazards.')});
+  H.forEach((h,i)=>{if(h<0||h+w[1]>L)warn('Hazard '+(i+1)+' at '+h+' s is too close to the end or outside the footage ('+L+' s).')});
+  for(let i=1;i<H.length;i++)if(H[i]-H[i-1]<=w[1]+1)warn('Hazards '+i+' and '+(i+1)+' are only '+r3(H[i]-H[i-1])+' s apart. A tap could count for the wrong one. Keep them more than '+(w[1]+1)+' s apart.');
+  const sets={};
+  ['A','B'].forEach(k=>{
+    const l=c.schedules[k]||[];
+    l.forEach((m,i)=>{
+      if(F&&m.t<F)warn('Set '+k+' message '+(i+1)+' at '+m.t+' s is inside the first '+F+' s, which should have no messages.');
+      if(m.t<0||m.t+c.noticeSeconds>L)warn('Set '+k+' message '+(i+1)+' at '+m.t+' s is outside the footage.');
+      if(i>0&&m.t<l[i-1].t+c.noticeSeconds)warn('Set '+k+' messages '+i+' and '+(i+1)+' overlap. Keep them at least '+c.noticeSeconds+' s apart.');
+      if(!m.replies||m.replies.length!==2)warn('Set '+k+' message '+(i+1)+' needs exactly two reply buttons.');
+    });
+    const paired=l.filter(m=>H.some(h=>h>=m.t&&h<=m.t+c.noticeSeconds)).length;
+    sets[k]={n:l.length,paired:paired,withMsg:H.map(h=>l.some(m=>h>=m.t&&h<=m.t+c.noticeSeconds))};
+    if(c.blocks){
+      l.forEach((m,i)=>{if(!phoneAt(c,k,m.t)||!phoneAt(c,k,m.t+c.noticeSeconds-0.01))warn('Set '+k+' message '+(i+1)+' at '+m.t+' s is not fully inside a phone block.')});
+      const ph=H.filter(h=>phoneAt(c,k,h)).length,np=H.length-ph;
+      if(Math.abs(ph-np)>1)warn('Set '+k+' has '+ph+' hazards in phone blocks and '+np+' in no-phone blocks. These should be about equal.');
+    }
+    if(!c.blocks&&l.length&&paired===l.length&&modeKey==='real')warn('In set '+k+' every message comes right before a hazard. Participants may learn that a message means a hazard is coming. Add some filler messages away from hazards.');
+  });
+  (c.joins||[]).forEach(j=>H.forEach((h,i)=>{if(Math.abs(h-j)<5)warn('Hazard '+(i+1)+' at '+h+' s is within 5 s of the join at '+j+' s. The cut itself could look like an event.')}));
+  if(!H.length)warn('No hazard times are set for this design yet.');
+  const both=c.blocks?0:H.filter((h,i)=>sets.A.withMsg[i]&&sets.B.withMsg[i]).length;
+  const nA=sets.A.withMsg.filter(Boolean).length,nB=sets.B.withMsg.filter(Boolean).length;
+  if(both)warn(both+' hazard(s) have a message in both sets. For a fair comparison each hazard should have a message in only one set.');
+  if(!c.blocks&&nA!==nB)warn('Set A has '+nA+' hazards with a message, set B has '+nB+'. These should match.');
+  if(!out.some(x=>x.bad))ok('No problems found in these settings.');
+  return out;
+}
+
+const $=(s,r)=>(r||document).querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const sleepUntil=t=>sleep(Math.max(0,t-performance.now()));
+const r3=x=>Math.round(x*1000)/1000;
+const mean=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
+const num=(x,d)=>x==null?'':Number(x).toFixed(d||0);
+const fmt=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
+const b64=s=>btoa(unescape(encodeURIComponent(s)));
+const b64u=s=>b64(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return decodeURIComponent(escape(atob(s)))};
+/* A short fingerprint of the timings, so the results tab can tell if a code was made with different settings. */
+function settingsKey(mode){
+  const c=MODES[mode];if(!c)return '';
+  const s=JSON.stringify([c.footageLength,c.leadIn,c.hazards,c.hitWindow,c.noticeSeconds,c.schedules.A.map(m=>m.t),c.schedules.B.map(m=>m.t)]);
+  let h=5381;for(let i=0;i<s.length;i++)h=((h*33)^s.charCodeAt(i))>>>0;
+  return h.toString(36);
+}
+const store={
+  get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+
+let modeKey='real';
+const cfg=()=>MODES[modeKey];
+const S={screen:'landing',pid:null,seat:'',schedule:'A',readyAt:null,tc:null,syncLag:null,taps:[],msgs:[],timer:null,wake:null,left:[],code:'',practice:0,hostTab:'run',hostFile:null,hostInfo:'',hostWarn:'',payload:null,lastSave:0,fileName:''};
+let collected=[];
+try{collected=JSON.parse(store.get('htt-collected')||'[]')||[]}catch(e){collected=[]}
+const saveCollected=()=>store.set('htt-collected',JSON.stringify(collected));
+const loadJSON=(k,d)=>{try{const v=JSON.parse(store.get(k)||'null');return v==null?d:v}catch(e){return d}};
+
+/* Problems a participant can report at the end. */
+const ISSUES=[
+  ['late','I missed the white flash or tapped the blue button late'],
+  ['lock','My screen locked or my phone went to sleep'],
+  ['away','I left the page or switched to another app'],
+  ['reload','The page reloaded, closed, or my phone died'],
+  ['sound','I could not see the screen or hear well at some point']
+];
+const ISSUE_SHORT={late:'late start',lock:'screen locked',away:'left page',reload:'page reloaded or phone died',sound:'could not see or hear'};
+
+/* The run in progress is saved on the phone, so a reload or crash still leaves a partial code. */
+function saveRun(ft){
+  S.lastSave=ft;
+  store.set('htt-run',JSON.stringify({pid:S.pid,schedule:S.schedule,seat:S.seat,mode:modeKey,syncLag:S.syncLag,
+    taps:S.taps,msgs:S.msgs,left:S.left,lastFt:r3(ft),sid:S.sid}));
+}
+
+/* ---------------- rendering ---------------- */
+const app=$('#app');
+let rendering=false;
+function render(){
+  // Redrawing removes the focused box, which can fire a change event that asks for another redraw.
+  if(rendering)return;rendering=true;
+  try{draw()}finally{rendering=false}
+}
+function draw(){
+  const f=VIEW[S.screen]; app.innerHTML=f();
+  if(S.screen==='front')bindFront();
+  if(S.screen==='end')bindEnd();
+  if(S.screen==='host'&&S.hostTab==='run')drawQR($('#qr'),pageUrl(),160);
+  window.scrollTo(0,0);
+}
+function go(name){S.screen=name;render()}
+
+const modeSeg=()=>`<div class="seg" role="group" aria-label="Timings">
+  <button type="button" data-act="mode" data-m="real" aria-pressed="${modeKey==='real'}">Class session</button>
+  <button type="button" data-act="mode" data-m="rehearsal" aria-pressed="${modeKey==='rehearsal'}">Rehearsal (short)</button></div>`;
+
+const VIEW={
+landing(){
+  const last=store.get('htt-last'),run=store.get('htt-run');
+  return `<main class="wrap center">
+    <h1>Hazard Tap Task</h1>
+    <p class="muted">A classroom attention study. Pick your role.</p>
+    ${run?`<section class="card"><h2>Your session stopped early</h2>
+      <p class="small muted">This phone has taps saved from a session that did not finish. Get your partial results code and send it to the researchers. Do not start again.</p>
+      <button class="btn primary big" data-act="partial">Get my partial results code</button></section>`:''}
+    ${run?`<details><summary>Start a new session on this phone</summary><div class="field" style="margin-top:12px">
+      <p class="small muted">Only if a researcher asks you to. Get your partial results code first.</p>
+      <button class="btn" data-act="roleP">I am a participant</button></div></details>`
+      :'<button class="btn primary big" data-act="roleP">I am a participant</button>'}
+    <button class="btn big" data-act="roleH">Projector and results (researchers)</button>
+    ${last?'<button class="btn" data-act="last">Show my last results code</button>':''}
+    ${modeSeg()}
+    <p class="small muted">The projector laptop and every phone must use the same timings.</p>
+  </main>`;
+},
+front(){
+  return `<main class="wrap">
+    <h1>Before we start</h1>
+    <label class="check"><input type="checkbox" id="consent"><span>I agree to take part in this class project. My taps are recorded under my participant number, not my name. Results stay on this phone until I send them to the researchers.</span></label>
+    <div class="field"><label for="pid">Participant number (from your slip)</label>
+      <input id="pid" type="number" inputmode="numeric" min="1" max="99" autocomplete="off"></div>
+    <div class="field"><label for="seat">Seat area on your slip (optional)</label>
+      <input id="seat" type="text" maxlength="6" autocomplete="off"></div>
+    <button class="btn primary big" id="frontGo" data-act="frontGo" disabled>Continue</button>
+  </main>`;
+},
+try(){
+  return `<main class="wrap">
+    <h1>Try the buttons</h1>
+    <ol>
+      <li>Watch the projector as if you were driving.</li>
+      <li>Tap the red button as soon as you notice a hazard on the road.</li>
+      <li>Messages pop up at the top of your phone. Tap a reply, then keep watching the road.</li>
+    </ol>
+    <button class="bigbtn hazard small" data-down="practiceTap" type="button">HAZARD</button>
+    <p class="muted">Practice taps: <b id="pc">${S.practice}</b> (practice taps are not saved)</p>
+    <button class="btn" data-act="sample">Show a sample message</button>
+    <p class="small muted">Turn off auto-lock and silence other apps so nothing else interrupts.</p>
+    <button class="btn primary big" data-act="ready">I am ready</button>
+  </main>`;
+},
+sync(){
+  return `<main class="run">
+    <p class="muted">Keep this screen on and look at the projector. Do not tap until the whole screen flashes white.</p>
+    <button class="bigbtn sync" data-down="syncTap" type="button">TAP WHEN THE SCREEN FLASHES</button>
+  </main>`;
+},
+run(){
+  return `<main class="run">
+    <div class="status"><span class="dot"></span>Recording</div>
+    <button class="bigbtn hazard" id="hz" data-down="hazardTap" type="button">HAZARD</button>
+  </main>`;
+},
+end(){
+  return `<main class="wrap">
+    <h1>${S.payload&&S.payload.status==='incomplete'?'Session stopped early':'Finished. Thank you.'}</h1>
+    <section class="card"><h2>Did anything go wrong?</h2>
+      <p class="small muted">Answer this first. Your answers are sent with your results. Being honest helps the study, and it does not affect you.</p>
+      ${ISSUES.map(([k,t])=>`<label class="check"><input type="checkbox" class="issue" value="${k}" ${S.payload&&(S.payload.issues||[]).includes(k)?'checked':''}><span>${esc(t)}</span></label>`).join('')}
+      <div class="field"><label for="issueOther">Anything else? (optional)</label>
+        <input id="issueOther" type="text" maxlength="120" autocomplete="off" value="${esc(S.payload&&S.payload.issueOther||'')}"></div>
+    </section>
+    ${SHEET_URL?`<button class="btn primary big" id="sendBtn" data-act="send">Send my results</button>
+    <p id="sendMsg" class="small" aria-live="polite">${esc(sendText())}</p>
+    <details><summary>Backup code</summary>
+      <div class="field" style="margin-top:12px">
+        <p class="small muted">Only needed if sending does not work. Show this to a researcher.</p>
+        <textarea id="code" readonly rows="5" aria-label="Your results code">${esc(S.code)}</textarea>
+        <button class="btn" data-act="copy">Copy my results code</button></div></details>`
+    :`<p>Then copy your results code and paste it where the researchers ask you to.</p>
+    <textarea id="code" readonly rows="6" aria-label="Your results code">${esc(S.code)}</textarea>
+    <button class="btn primary big" data-act="copy">Copy my results code</button>`}
+    <p id="copyMsg" class="small muted" aria-live="polite"></p>
+    <details><summary>Clear this phone</summary>
+      <div class="field" style="margin-top:12px"><p class="small muted">Only do this after the researchers have your code.</p>
+      <button class="btn" data-act="clear">Clear my data from this phone</button></div></details>
+  </main>`;
+},
+host(){
+  const c=cfg();
+  const both=['A','B'].map(k=>{
+    const l=c.schedules[k];
+    const n=c.hazards.filter(h=>phoneAt(c,k,h)).length;
+    return `${k}: ${n} of ${c.hazards.length}`;
+  }).join(' | ');
+  const chk=checkSettings(c),nBad=chk.filter(x=>x.bad).length;
+  return `<main class="wrap">
+    <h1>Projector and results</h1>
+    <div class="tabs" role="group" aria-label="Section">
+      <button class="btn" data-act="hostTab" data-t="run" aria-pressed="${S.hostTab==='run'}">Run</button>
+      <button class="btn" data-act="hostTab" data-t="results" aria-pressed="${S.hostTab==='results'}">Results (${collected.length})</button>
+    </div>
+    ${S.hostTab==='run'?hostRun():hostResults()}
+    <button class="btn" data-act="home">Back to start</button>
+  </main>`;
+  function hostRun(){return `
+    <section class="card"><h2>Before you start</h2>
+      <ol>
+        <li>Open this page on every phone. Tap "I am a participant", enter the number on the slip, and tap "I am ready".</li>
+        <li>Check that phones are all waiting on the blue button.</li>
+        <li>Choose the footage below, or leave it empty to rehearse with the placeholder road.</li>
+        <li>Tap Start session. A 5 second countdown ends with a white flash.</li>
+      </ol></section>
+    <section class="card"><h2>Link for phones</h2>
+      <div class="qrrow"><div id="qr" class="qr" role="img" aria-label="QR code for the participant link"></div>
+        <div class="field" style="flex:1;min-width:200px">
+          <p class="link" id="pageUrl">${esc(pageUrl())}</p>
+          ${pageUrlWarn()?`<p class="small err">${esc(pageUrlWarn())}</p>`:'<p class="small muted">Participants scan this with their phone camera.</p>'}
+          <button class="btn" data-act="qrBig">Show QR code on the projector</button></div></div></section>
+    <section class="card"><h2>Footage</h2>
+      <input id="vf" type="file" accept="video/*" aria-label="Footage file">
+      <p class="small ${S.hostWarn?'err':'muted'}" id="vinfo">${esc(S.hostWarn||S.hostInfo||'No file chosen. The placeholder road will play.')}</p></section>
+    <section class="card"><h2>Timings: ${esc(c.label)}</h2>
+      <p class="small ${nBad?'err':'ok'}">${nBad?nBad+(nBad===1?' warning':' warnings')+' in the settings. The person who set the hazard times should open the details below.':'Settings check: no problems found.'}</p>
+      <details><summary>Details (hides hazard information from the session runners)</summary><div class="field" style="margin-top:12px">
+      <dl>
+        <dt>Footage length</dt><dd>${c.footageLength} s</dd>
+        <dt>Flash to footage</dt><dd>${c.leadIn} s</dd>
+        <dt>Hazards</dt><dd>${c.hazards.length}</dd>
+        <dt>Counts as found</dt><dd>${c.hitWindow[0]} to ${c.hitWindow[1]} s after onset</dd>
+        <dt>Messages per phone</dt><dd>${c.schedules.A.length} (on screen ${c.noticeSeconds} s)</dd>
+        ${c.video?`<dt>Video file</dt><dd>${esc(c.video)}</dd>`:''}
+        ${c.blocks?`<dt>Phone blocks (A, odd)</dt><dd>${c.blocks.A.filter(b=>b[2]).map(b=>fmt(b[0])+'-'+fmt(b[1])).join(', ')}</dd>
+        <dt>Phone blocks (B, even)</dt><dd>${c.blocks.B.filter(b=>b[2]).map(b=>fmt(b[0])+'-'+fmt(b[1])).join(', ')}</dd>`:''}
+        <dt>Hazards in the phone condition</dt><dd>${both}</dd>
+      </dl>
+      <ul class="checks">${chk.map(x=>`<li class="${x.bad?'err':'ok'}">${esc(x.t)}</li>`).join('')}</ul></div></details></section>
+    <button class="btn primary big" data-act="hostStart">Start session</button>`;}
+  function hostResults(){
+    const P=pooled();
+    const rows=collected.slice().sort((a,b)=>a.pid-b.pid).map(p=>{const s=p.summary;return `<tr>
+      <td>${p.pid}</td><td>${esc(p.schedule)}</td><td>${s.found}/${s.hazardsTotal}</td>
+      <td>${s.withMsg.found}/${s.withMsg.total}</td><td>${s.noMsg.found}/${s.noMsg.total}</td>
+      <td>${s.falseAlarms}</td><td>${s.msgsAnswered}/${s.msgsShown}</td><td>${num(s.meanRT)}</td></tr>`}).join('');
+    const L=sessionLog(),notes=loadJSON('htt-notes',{}),runs=loadJSON('htt-sessions',[]);
+    const logRows=L.rows.map(r=>`<tr><td>${r.pid}</td><td style="text-align:left">${esc(r.status)}</td>
+      <td style="text-align:left;white-space:normal;min-width:180px" class="${r.flags.length?'err':''}">${esc(r.flags.join('; ')||'none')}</td>
+      <td style="text-align:left"><input type="text" class="note" data-pid="${r.pid}" value="${esc(notes[r.pid]||'')}" aria-label="Notes for participant ${r.pid}" style="min-width:160px;padding:8px"></td></tr>`).join('');
+    return `
+    <section class="card"><h2>Session log</h2>
+      <div class="field"><label for="expected">Participant numbers handed out</label>
+        <input id="expected" type="text" inputmode="text" autocomplete="off" placeholder="for example 1-16" value="${esc(store.get('htt-expected')||'')}"></div>
+      <dl>
+        <dt>Handed out</dt><dd>${L.expected.length||'not entered'}</dd>
+        <dt>Codes received</dt><dd>${L.complete+L.incomplete} (${L.complete} complete, ${L.incomplete} stopped early)</dd>
+        <dt>No code yet</dt><dd>${L.missing.length?L.missing.join(', '):'none'}</dd>
+        <dt>With a problem</dt><dd>${L.flagged.length?L.flagged.join(', '):'none'}</dd>
+      </dl>
+      ${L.rows.length?`<div class="tablebox"><table><thead><tr><th>P#</th><th style="text-align:left">Status</th><th style="text-align:left">Problems</th><th style="text-align:left">Your notes</th></tr></thead><tbody>${logRows}</tbody></table></div>
+      <p class="small muted">Problems come from the phone (left the page, stopped early, no taps) and from what the participant reported. Notes save as you type.</p>`:''}
+      ${runs.length?`<details><summary>Sessions started on this laptop (${runs.length})</summary><ul class="small" style="margin-top:8px">${runs.map(x=>`<li>${esc(new Date(x.at).toLocaleString())}: ${esc(x.mode==='real'?'class session':'rehearsal')}, ${esc(x.footage)}${x.delay!=null?', video started '+Math.round(x.delay)+' ms late':''}${x.stopped?', stopped early':''}</li>`).join('')}</ul></details>`:''}
+    </section>
+    ${SHEET_URL?`<section class="card"><h2>Load results from the Google Sheet</h2>
+      <p class="small muted">Brings every participant from the Sheet into the tables below, so you can check the session log. Use the researcher key you set in the Apps Script.</p>
+      <div class="field"><label for="sheetKey">Researcher key</label>
+        <input id="sheetKey" type="text" autocomplete="off" value="${esc(store.get('htt-key')||'')}"></div>
+      <button class="btn primary" data-act="loadSheet">Load from Google Sheet</button>
+      <p id="loadMsg" class="small" aria-live="polite"></p></section>`:''}
+    <section class="card"><h2>Add results by hand</h2>
+      <p class="small muted">Paste one or many results codes (each starts with HTT1.) (for example from a phone whose results did not send) and tap Add. Codes are kept in this browser until you clear them.</p>
+      <textarea id="paste" rows="4" aria-label="Results codes"></textarea>
+      <button class="btn primary" data-act="addCode">Add</button>
+      <p id="addMsg" class="small" aria-live="polite"></p></section>
+    <section class="card"><h2>Hazards found</h2>
+      ${collected.length?`<div class="tablebox"><table><thead><tr><th>P#</th><th>Set</th><th>Found</th><th>Phone</th><th>No phone</th><th>False</th><th>Msgs</th><th>RT ms</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="small muted">Found = hazards tapped in time. Phone = hazards in a phone block (or, in the older design, while a message was on screen). False = taps that matched no hazard. Msgs = messages answered. RT = mean time to tap for found hazards.</p>
+      <p class="small">All participants so far: phone condition ${P.wm}; no-phone condition ${P.nm}.</p>`:'<p class="muted">No participants added yet.</p>'}</section>
+    <section class="card"><h2>Copy data for your spreadsheet</h2>
+      <div class="row">
+        <button class="btn" data-act="csv" data-k="summary">Summary</button>
+        <button class="btn" data-act="csv" data-k="hazards">Hazard by hazard</button>
+        <button class="btn" data-act="csv" data-k="messages">Messages</button>
+        <button class="btn" data-act="csv" data-k="taps">All taps</button>
+        <button class="btn" data-act="csv" data-k="log">Session log</button></div>
+      <textarea id="csvOut" rows="6" readonly aria-label="CSV output"></textarea>
+      <p id="csvMsg" class="small muted" aria-live="polite"></p>
+      <details><summary>Clear all collected data</summary><div class="field" style="margin-top:12px">
+        <p class="small muted">Copy your data first. This removes every participant, your notes and the session list from this browser.</p>
+        <button class="btn" data-act="clearAll">Clear everything</button></div></details></section>`;
+  }
+}
+};
+
+/* ---------------- participant flow ---------------- */
+function bindFront(){
+  const c=$('#consent'),p=$('#pid'),g=$('#frontGo');
+  const check=()=>{const n=Number(p.value);g.disabled=!(c.checked&&Number.isInteger(n)&&n>=1&&n<=99)};
+  c.addEventListener('input',check);p.addEventListener('input',check);check();
+}
+function pageUrl(){return PAGE_URL||String(location.href).split('#')[0].split('?')[0]}
+function pageUrlWarn(){
+  if(PAGE_URL)return '';
+  if(location.protocol==='file:')return 'This page is open from a file, so phones cannot use this link. Put your hosted link in PAGE_URL in the settings.';
+  if(/claude/i.test(location.hostname))return 'This is a preview address that classmates may not be able to open. Put your hosted link in PAGE_URL in the settings.';
+  return '';
+}
+function drawQR(el,text,size){
+  if(!el)return;el.innerHTML='';
+  if(!window.QRCode){el.innerHTML='<p class="small" style="color:#000;text-align:center">The QR code could not load. Share the link instead.</p>';return}
+  try{new window.QRCode(el,{text:text,width:size,height:size,colorDark:'#000000',colorLight:'#ffffff',correctLevel:window.QRCode.CorrectLevel.M})}
+  catch(e){el.innerHTML='<p class="small" style="color:#000">The QR code could not be made.</p>'}
+}
+function bindEnd(){
+  const upd=()=>{
+    if(!S.payload)return;
+    S.payload.issues=[...document.querySelectorAll('.issue:checked')].map(x=>x.value);
+    S.payload.issueOther=($('#issueOther').value||'').trim().slice(0,120);
+    S.code=S.payload.v===1?'HTT1.'+b64(JSON.stringify(S.payload)):encodeCode(S.payload);
+    store.set('htt-last',S.code);store.set('htt-lastp',JSON.stringify(S.payload));
+    const t=$('#code');if(t)t.value=S.code;
+    const m=$('#copyMsg');if(m)m.textContent='';
+    if(SHEET_URL){S.sendState='changed';queueSend();showSend()}
+  };
+  document.querySelectorAll('.issue').forEach(x=>x.addEventListener('change',upd));
+  const o=$('#issueOther');if(o)o.addEventListener('input',upd);
+}
+async function lockScreen(){try{if(navigator.wakeLock)S.wake=await navigator.wakeLock.request('screen')}catch(e){}}
+function releaseScreen(){try{S.wake&&S.wake.release()}catch(e){}S.wake=null}
+
+function showNotice(m,idx,sample){
+  const el=$('#notice');
+  el.dataset.idx=idx;el.dataset.sample=sample?'1':'';
+  el.innerHTML=`<div class="msg"><div class="avatar">${esc(m.from[0])}</div><div class="body">
+    <div class="from">${esc(m.from)}</div><div class="text">${esc(m.text)}</div>
+    <div class="replies">${m.replies.map((r,i)=>`<button class="reply" type="button" data-down="reply" data-i="${i}">${esc(r)}</button>`).join('')}</div></div></div>`;
+  el.hidden=false;
+  try{if(navigator.vibrate)navigator.vibrate(120)}catch(e){}
+}
+function hideNotice(i){const el=$('#notice');if(i!=null&&el.dataset.idx!==String(i))return;el.hidden=true;el.innerHTML=''}
+const footTime=now=>(now-S.tc)/1000-cfg().leadIn;
+
+function tick(){
+  const c=cfg(),ft=footTime(performance.now()),list=c.schedules[S.schedule];
+  list.forEach((m,i)=>{
+    const rec=S.msgs[i];
+    if(rec.shown==null&&!rec.missed&&ft>=m.t){
+      // If the phone was away for the whole time the message was due, it is never shown.
+      if(ft>=m.t+c.noticeSeconds){rec.missed=true;rec.skipped=true;saveRun(ft)}
+      else{rec.shown=r3(ft);showNotice(m,i,false);saveRun(ft)}
+    }
+    else if(rec.shown!=null&&rec.replied==null&&!rec.missed&&ft>=m.t+c.noticeSeconds){rec.missed=true;hideNotice(i);saveRun(ft)}
+  });
+  if(ft-S.lastSave>=2)saveRun(ft);
+  if(ft>=c.footageLength+3)finish();
+}
+
+function analyseData(mode,schedule,tapTimes,msgs,stoppedAt){
+  const c=MODES[mode],w0=c.hitWindow[0],w1=c.hitWindow[1],list=c.schedules[schedule]||[];
+  const taps=tapTimes.map((t,k)=>({t:t,k:k})).filter(o=>o.t>=0);
+  const used=new Set();
+  // If the session stopped early, only hazards that had fully played count.
+  const counted=stoppedAt==null?c.hazards:c.hazards.filter(h=>h+w1<=stoppedAt);
+  const hazards=counted.map((h,i)=>{
+    const withMsg=list.some(m=>h>=m.t&&h<=m.t+c.noticeSeconds);
+    const phone=phoneAt(c,schedule,h);
+    const hit=taps.find(o=>{const d=o.t-h;return d>=w0&&d<=w1&&!used.has(o.k)});
+    if(hit)used.add(hit.k);
+    let open=null;
+    if(withMsg){
+      const r=msgs.find(m=>h>=m.t&&h<=m.t+c.noticeSeconds);
+      open=!!(r&&r.shown!=null&&r.shown<=h&&(r.replied!=null?r.replied>h:h<=r.shown+c.noticeSeconds));
+    }
+    return {i:c.hazards.indexOf(h)+1,h:h,withMsg:withMsg,phone:phone,open:open,found:!!hit,rt:hit?Math.round((hit.t-h)*1000):null};
+  });
+  let falseAlarms=0,extra=0;
+  taps.forEach(o=>{
+    if(used.has(o.k))return;
+    const inWin=c.hazards.some(h=>{const d=o.t-h;return d>=w0&&d<=w1});
+    if(inWin)extra++;else falseAlarms++;
+  });
+  const grp=f=>{const g=hazards.filter(f),hit=g.filter(z=>z.found);return {total:g.length,found:hit.length,rt:mean(hit.map(z=>z.rt))}};
+  const found=hazards.filter(z=>z.found);
+  const shown=msgs.filter(m=>m.shown!=null),ans=shown.filter(m=>m.replied!=null);
+  return {hazards:hazards,summary:{
+    hazardsTotal:hazards.length,found:found.length,falseAlarms:falseAlarms,extraTaps:extra,
+    meanRT:mean(found.map(z=>z.rt)),withMsg:grp(z=>z.phone),noMsg:grp(z=>!z.phone),
+    msgsShown:shown.length,msgsAnswered:ans.length,
+    meanReplyRT:mean(ans.map(m=>(m.replied-m.shown)*1000))
+  }};
+}
+
+/* Results code, version 2: only the raw taps and message times, in milliseconds, so the code stays
+   short. The results tab rescores it with the settings in this file. */
+function encodeCode(P){
+  const ms=x=>x==null?null:Math.round(x*1000);
+  const o={v:2,m:P.mode==='real'?'r':'h',p:P.pid,s:P.schedule,c:P.status==='incomplete'?0:1,k:P.key,
+    t:P.taps.map(ms),
+    g:P.msgs.map(m=>m.skipped?[-1]:m.shown==null?[]:m.replied==null?[ms(m.shown)]:[ms(m.shown),ms(m.replied),m.ri==null?0:m.ri]),
+    l:(P.leftAt||[]).map(ms)};
+  if(P.seat)o.st=P.seat;
+  if(P.syncLag!=null)o.w=P.syncLag;
+  if(P.stoppedAt!=null)o.x=ms(P.stoppedAt);
+  if(P.issues&&P.issues.length)o.i=P.issues;
+  if(P.issueOther)o.o=P.issueOther;
+  if(P.sid)o.id=P.sid;
+  return 'HTT1.'+b64u(JSON.stringify(o));
+}
+function decodeCode(token){
+  const p=JSON.parse(unb64(token));
+  if(p&&p.v===1&&p.summary)return p;          // codes made by the earlier version
+  if(!p||p.v!==2)throw new Error('unknown code');
+  const mode=p.m==='r'?'real':'rehearsal',list=MODES[mode].schedules[p.s]||[];
+  const sec=x=>x==null?null:x/1000;
+  const msgs=list.map((m,i)=>{
+    const g=(p.g||[])[i]||[],sk=g[0]===-1,shown=sk?null:sec(g[0]),replied=sk?null:sec(g[1]);
+    return {n:i+1,t:m.t,shown:shown,replied:replied,reply:replied!=null?(m.replies[g[2]]||''):null,missed:sk||(shown!=null&&replied==null),skipped:sk};
+  });
+  const taps=(p.t||[]).map(sec),stoppedAt=p.x==null?null:sec(p.x);
+  const a=analyseData(mode,p.s,taps,msgs,stoppedAt);
+  return {v:2,mode:mode,pid:p.p,schedule:p.s,seat:p.st||'',syncLag:p.w==null?null:p.w,
+    status:p.c?'complete':'incomplete',stoppedAt:stoppedAt,issues:p.i||[],issueOther:p.o||'',
+    taps:taps,msgs:msgs,summary:a.summary,
+    hazards:a.hazards.map(z=>({i:z.i,h:z.h,m:z.phone?1:0,ms:z.withMsg?1:0,o:z.open==null?null:(z.open?1:0),f:z.found?1:0,rt:z.rt})),
+    left:(p.l||[]).length,leftAt:(p.l||[]).map(sec),keyOk:p.k===settingsKey(mode),sid:p.id||'',raw:token};
+}
+function finish(stoppedAt){
+  clearInterval(S.timer);S.timer=null;hideNotice();releaseScreen();
+  const early=stoppedAt!=null;
+  const payload={v:2,mode:modeKey,pid:S.pid,schedule:S.schedule,seat:S.seat,syncLag:S.syncLag==null?null:r3(S.syncLag),
+    status:early?'incomplete':'complete',stoppedAt:early?r3(stoppedAt):null,issues:early?['reload']:[],issueOther:'',
+    taps:S.taps.slice(),msgs:S.msgs.map(m=>({shown:m.shown,replied:m.replied,ri:m.ri,skipped:!!m.skipped})),
+    leftAt:S.left.slice(),key:settingsKey(modeKey),sid:S.sid||('s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7))};
+  S.payload=payload;
+  S.code=encodeCode(payload);
+  store.set('htt-last',S.code);store.set('htt-lastp',JSON.stringify(payload));
+  store.del('htt-run');
+  S.sendState='';
+  go('end');
+  if(SHEET_URL){queueSend();sendNow()}   // sends right away; sent again with the checklist answers
+}
+function resumePartial(){
+  let r;try{r=JSON.parse(store.get('htt-run')||'null')}catch(e){r=null}
+  if(!r){store.del('htt-run');render();return}
+  modeKey=MODES[r.mode]?r.mode:'real';
+  S.pid=r.pid;S.schedule=r.schedule;S.seat=r.seat||'';S.syncLag=r.syncLag;
+  S.taps=r.taps||[];S.msgs=r.msgs||[];S.left=r.left||[];S.sid=r.sid||'';
+  finish(r.lastFt||0);
+}
+
+/* ---------------- sending to the Google Sheet ---------------- */
+// Each run has its own session id, so the Sheet replaces that run's rows when the same run is sent again.
+const HEAD={
+  Summary:['session','sent_at','participant','set','seat','design','sync_wait_s','hazards_total','hazards_found','found_phone','total_phone','found_no_phone','total_no_phone','false_alarms','extra_taps','mean_rt_ms','mean_rt_phone_ms','mean_rt_no_phone_ms','msgs_shown','msgs_answered','mean_reply_rt_ms','times_left_page','status','stopped_at_s','problems','code'],
+  Hazards:['session','participant','set','hazard','hazard_time_s','phone_condition','msg_on_screen','msg_still_open_at_hazard','found','rt_ms'],
+  Messages:['session','participant','set','message','planned_s','shown_s','answered','reply','reply_rt_ms','not_shown_phone_away']
+};
+const designOf=p=>p.mode==='real'?MODES.real.label:'rehearsal';
+function summaryRow(p){const s=p.summary;return [p.pid,p.schedule,p.seat,designOf(p),p.syncLag,s.hazardsTotal,s.found,s.withMsg.found,s.withMsg.total,s.noMsg.found,s.noMsg.total,s.falseAlarms,s.extraTaps,num(s.meanRT),num(s.withMsg.rt),num(s.noMsg.rt),s.msgsShown,s.msgsAnswered,num(s.meanReplyRT),p.left==null?'':p.left,p.status||'complete',p.stoppedAt==null?'':p.stoppedAt,flagsFor(p).join('; ')]}
+const hazardRows=p=>p.hazards.map(z=>[p.pid,p.schedule,z.i,z.h,z.m,z.ms==null?z.m:z.ms,z.o,z.f,z.rt]);
+const messageRows=p=>p.msgs.map(m=>[p.pid,p.schedule,m.n,m.t,m.shown,m.replied!=null?1:0,m.reply,m.replied!=null&&m.shown!=null?Math.round((m.replied-m.shown)*1000):'',m.skipped?1:0]);
+const blank=r=>r.map(v=>v==null?'':v);
+function sheetBody(){
+  const p=decodeCode(S.code.slice(5)),id=S.payload.sid,at=new Date().toISOString();
+  return JSON.stringify({v:1,session:id,headers:HEAD,
+    Summary:[blank([id,at].concat(summaryRow(p),[S.code]))],
+    Hazards:hazardRows(p).map(r=>blank([id].concat(r))),
+    Messages:messageRows(p).map(r=>blank([id].concat(r)))});
+}
+function queueSend(){if(SHEET_URL&&S.payload&&S.code)store.set('htt-outbox',sheetBody())}
+function sendText(){
+  return {sending:'Sending...',sent:'Sent. Thank you, you are done.',changed:'You changed your answers. Tap Send again.',
+    failed:'Not sent yet. Check that you are online, then tap Send again. If it still fails, show the backup code to a researcher.'}[S.sendState]||'';
+}
+function showSend(){
+  const m=$('#sendMsg');if(m){m.textContent=sendText();m.className='small '+(S.sendState==='sent'?'ok':S.sendState==='sending'?'muted':'err')}
+  const b=$('#sendBtn');if(b){b.disabled=S.sendState==='sending';b.textContent=S.sendState==='sent'?'Sent':'Send my results'}
+}
+async function sendNow(){
+  const body=store.get('htt-outbox');if(!SHEET_URL||!body)return false;
+  S.sendState='sending';showSend();
+  let ok=false;
+  for(let tryNo=0;tryNo<3&&!ok;tryNo++){
+    try{
+      const r=await fetch(SHEET_URL,{method:'POST',body:body});   // plain text body, no extra headers
+      const j=await r.json();ok=!!(j&&j.ok);
+    }catch(e){}
+    if(!ok)await sleep(1500);
+  }
+  if(ok&&store.get('htt-outbox')===body)store.del('htt-outbox');
+  if(S.screen==='end'){S.sendState=ok?'sent':'failed';showSend()}
+  return ok;
+}
+
+async function copyText(text,ta,msgEl){
+  try{await navigator.clipboard.writeText(text);msgEl.textContent='Copied.';return}
+  catch(e){}
+  try{ta.focus();ta.select();ta.setSelectionRange(0,text.length+1);
+    if(document.execCommand&&document.execCommand('copy')){msgEl.textContent='Copied.';return}}catch(e){}
+  msgEl.textContent='The text is selected. Use your phone\'s Copy option.';
+}
+
+/* ---------------- host flow ---------------- */
+let hostRunId=0,audio=null,videoURL=null;
+function getAudio(){try{if(!audio)audio=new (window.AudioContext||window.webkitAudioContext)();return audio}catch(e){return null}}
+function tone(f,d){
+  const ac=getAudio();if(!ac)return;
+  try{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;g.gain.value=.15;
+    o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}
+}
+const stage=$('#stage'),vid=$('#vid'),cv=$('#cv'),stageText=$('#stageText');
+function stageSet(bg,html){stage.style.background=bg;stageText.innerHTML=html||''}
+
+function drawRoad(ctx,w,h,ft,c){
+  const hz=h*.42;
+  ctx.fillStyle='#223044';ctx.fillRect(0,0,w,hz);
+  ctx.fillStyle='#1d2a1f';ctx.fillRect(0,hz,w,h-hz);
+  ctx.fillStyle='#3a3f47';ctx.beginPath();
+  ctx.moveTo(w*.47,hz);ctx.lineTo(w*.53,hz);ctx.lineTo(w*.92,h);ctx.lineTo(w*.08,h);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#d9d4b8';
+  const phase=(ft*.9)%1;
+  for(let k=0;k<9;k++){
+    const z0=(k+phase)/9,z1=(k+phase+.5)/9;
+    const y0=hz+(h-hz)*z0*z0,y1=hz+(h-hz)*z1*z1,w0=2+z0*26,w1=2+z1*26;
+    ctx.beginPath();ctx.moveTo(w/2-w0/2,y0);ctx.lineTo(w/2+w0/2,y0);ctx.lineTo(w/2+w1/2,y1);ctx.lineTo(w/2-w1/2,y1);ctx.closePath();ctx.fill();
+  }
+  const hit=c.hazards.findIndex(x=>ft>=x&&ft<=x+2.5);
+  if(hit>=0){
+    const p=(ft-c.hazards[hit])/2.5,s=.35+.65*p,cx=w/2+(hit%2?-1:1)*w*.08*s,cy=hz+(h-hz)*(.25+.5*p),sz=h*.16*s;
+    ctx.fillStyle='#e5484d';ctx.beginPath();ctx.moveTo(cx,cy-sz);ctx.lineTo(cx+sz*.9,cy+sz*.7);ctx.lineTo(cx-sz*.9,cy+sz*.7);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold '+Math.round(sz*.9)+'px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('!',cx,cy+sz*.15);
+  }
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='16px system-ui';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.fillText('Placeholder footage for rehearsal',16,h-16);
+}
+
+function hostFinish(id,delay){
+  if(id!==hostRunId)return;
+  try{vid.pause()}catch(e){}
+  if(delay!=null)logSession({delay:delay});
+  vid.hidden=true;cv.hidden=true;
+  stageSet('#000',`<h2 style="font-size:2rem">Footage finished</h2><p>Phones finish on their own a few seconds later.</p>
+    ${delay!=null?`<p style="opacity:.7">The video started ${Math.round(delay)} ms after its planned time. Write this number down.</p>`:''}
+    <button class="btn primary" data-act="hostStop">Back to controls</button>`);
+}
+
+async function hostStart(){
+  const id=++hostRunId,c=cfg();
+  S.vidLive=false;
+  if(videoURL){
+    // Start and pause the video right away (muted), while the click still counts as a user action.
+    try{vid.muted=true;const pr=vid.play();
+      if(pr&&pr.then)pr.then(()=>{if(!S.vidLive){vid.pause();try{vid.currentTime=0}catch(e){}}vid.muted=false}).catch(()=>{vid.muted=false})}catch(e){vid.muted=false}
+  }
+  vid.hidden=true;cv.hidden=true;stage.hidden=false;
+  try{if(stage.requestFullscreen)await stage.requestFullscreen()}catch(e){}
+  getAudio();try{if(audio&&audio.state==='suspended')audio.resume()}catch(e){}
+  for(let n=5;n>=1;n--){
+    if(id!==hostRunId)return;
+    stageSet('#000',`<div class="count">${n}</div><p style="font-size:1.4rem">Phones ready? Tap your button when the screen flashes white.</p>`);
+    tone(440,.08);await sleep(1000);
+  }
+  if(id!==hostRunId)return;
+  logSession(null,{at:new Date().toISOString(),mode:modeKey,footage:videoURL?(S.fileName||'video file'):'placeholder road',delay:null,stopped:false});
+  const t0=performance.now();
+  stageSet('#fff','<div class="cue">TAP NOW</div>');tone(880,.4);
+  await sleepUntil(t0+1200);if(id!==hostRunId)return;
+  stageSet('#000','<p style="font-size:1.6rem;opacity:.8">Get ready</p>');
+  const plan=t0+c.leadIn*1000;
+  await sleepUntil(plan);if(id!==hostRunId)return;
+  if(videoURL){
+    stageText.innerHTML='';vid.hidden=false;S.vidLive=true;vid.muted=false;
+    if(vid.currentTime>0.05){try{vid.currentTime=0}catch(e){}}
+    vid.onended=()=>hostFinish(id,null);
+    vid.onplaying=()=>{vid.onplaying=null;hostFinish.delay=performance.now()-plan};
+    vid.onended=()=>hostFinish(id,hostFinish.delay);
+    try{await vid.play()}catch(e){
+      stageSet('#000','<p style="font-size:1.4rem">The video would not start by itself.</p><button class="btn primary" data-act="hostStop">Back to controls</button>');
+    }
+  }else{
+    stageText.innerHTML='';cv.hidden=false;
+    cv.width=stage.clientWidth||innerWidth;cv.height=stage.clientHeight||innerHeight;
+    const ctx=cv.getContext('2d');
+    (function frame(){
+      if(id!==hostRunId)return;
+      const ft=(performance.now()-plan)/1000;
+      if(ft>=c.footageLength){hostFinish(id,null);return}
+      drawRoad(ctx,cv.width,cv.height,ft,c);requestAnimationFrame(frame);
+    })();
+  }
+}
+/* Sessions started on this laptop: logSession(null, entry) adds one; logSession(changes) updates the latest. */
+function logSession(changes,entry){
+  const list=loadJSON('htt-sessions',[]);
+  if(entry)list.push(entry);else if(list.length)Object.assign(list[list.length-1],changes);
+  store.set('htt-sessions',JSON.stringify(list.slice(-30)));
+}
+function showBigQR(){
+  hostRunId++;vid.hidden=true;cv.hidden=true;stage.hidden=false;
+  const url=pageUrl(),size=Math.round(Math.min(innerWidth,innerHeight)*0.62);
+  stageSet('#fff',`<div id="qrBig" class="qrbig"></div>
+    <p style="color:#000;font-size:clamp(1rem,2.2vw,1.8rem);font-weight:700;word-break:break-all;max-width:90vw">${esc(url)}</p>
+    <button class="btn primary" data-act="hostStop">Close</button>`);
+  drawQR($('#qrBig'),url,size);
+}
+function hostStop(){
+  if(!stage.hidden&&(!vid.hidden||!cv.hidden))logSession({stopped:true});
+  hostRunId++;try{vid.pause()}catch(e){}
+  vid.hidden=true;cv.hidden=true;stage.hidden=true;stageText.innerHTML='';
+  try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen()}catch(e){}
+  if(S.screen==='host')render();
+}
+
+/* ---------------- host: collecting results ---------------- */
+function pooled(){
+  let wmT=0,wmF=0,nmT=0,nmF=0;const wr=[],nr=[];
+  collected.forEach(p=>{const s=p.summary;wmT+=s.withMsg.total;wmF+=s.withMsg.found;nmT+=s.noMsg.total;nmF+=s.noMsg.found;
+    p.hazards.forEach(z=>{if(z.f&&z.rt!=null)(z.m?wr:nr).push(z.rt)})});
+  const f=(F,T,R)=>`${F} of ${T} found (${T?Math.round(100*F/T):0}%)${R.length?', mean RT '+Math.round(mean(R))+' ms':''}`;
+  return {wm:f(wmF,wmT,wr),nm:f(nmF,nmT,nr)};
+}
+/* "1-16, 18" -> [1..16, 18] */
+function parseExpected(s){
+  const out=new Set();
+  String(s||'').split(/[,\s]+/).forEach(part=>{
+    const m=part.match(/^(\d+)(?:-(\d+))?$/);if(!m)return;
+    const a=Number(m[1]),b=m[2]?Number(m[2]):a;
+    for(let n=Math.min(a,b);n<=Math.max(a,b)&&n<=99;n++)if(n>=1)out.add(n);
+  });
+  return [...out].sort((x,y)=>x-y);
+}
+function flagsFor(p){
+  const f=[],s=p.summary;
+  if(p.status==='incomplete')f.push('stopped early at '+Math.round(p.stoppedAt||0)+' s');
+  if(p.left)f.push('phone left the page '+p.left+(p.left===1?' time':' times'));
+  (p.issues||[]).forEach(k=>{const t=ISSUE_SHORT[k];if(t&&!(k==='reload'&&p.status==='incomplete')&&!(k==='away'&&p.left))f.push('reported: '+t)});
+  if(p.issueOther)f.push('said: '+p.issueOther);
+  if(!(p.taps||[]).some(t=>t>=0))f.push('no taps recorded');
+  if(p.keyOk===false)f.push('code was made with different timings than this page');
+  if(s.msgsShown&&s.msgsAnswered===0)f.push('answered no messages');
+  if(p.mode!=='real')f.push('used rehearsal timings');
+  return f;
+}
+function sessionLog(){
+  const expected=parseExpected(store.get('htt-expected'));
+  const byPid={};collected.forEach(p=>byPid[p.pid]=p);
+  const all=[...new Set(expected.concat(collected.map(p=>p.pid)))].sort((a,b)=>a-b);
+  const rows=all.map(pid=>{
+    const p=byPid[pid];
+    if(!p)return {pid:pid,status:'no code',flags:['no results received']};
+    const extra=expected.length&&!expected.includes(pid)?['number was not on the handed-out list']:[];
+    return {pid:pid,status:p.status==='incomplete'?'stopped early':'complete',flags:flagsFor(p).concat(extra)};
+  });
+  return {expected:expected,rows:rows,
+    complete:collected.filter(p=>p.status!=='incomplete').length,
+    incomplete:collected.filter(p=>p.status==='incomplete').length,
+    missing:rows.filter(r=>r.status==='no code').map(r=>r.pid),
+    flagged:rows.filter(r=>r.status!=='no code'&&r.flags.length).map(r=>r.pid)};
+}
+function addCode(raw){
+  // Accepts codes copied from the phone, or a whole column copied from the Sheet (quotes, commas, %2B and so on).
+  raw=String(raw||'').replace(/%([0-9A-Fa-f]{2})/g,(m,h)=>String.fromCharCode(parseInt(h,16)));
+  const parts=raw.split('HTT1.').slice(1);
+  if(!parts.length)return {ok:false,msg:'That does not look like a results code. It should start with HTT1.'};
+  const msgs=[];let ok=true;
+  parts.forEach(chunk=>{
+    const token=(chunk.match(/^[A-Za-z0-9+\/=_-]+/)||[''])[0];let p;
+    try{p=decodeCode(token)}catch(e){ok=false;msgs.push('One code is incomplete or not recognised. Ask for it to be copied again.');return}
+    if(!p||p.pid==null){ok=false;msgs.push('One code was not recognised.');return}
+    const i=collected.findIndex(x=>x.pid===p.pid);
+    if(i>=0){collected[i]=p;msgs.push('Participant '+p.pid+' was already listed, so it was replaced.')}
+    else{collected.push(p);msgs.push('Added participant '+p.pid+'.')}
+  });
+  saveCollected();return {ok:ok,msg:msgs.join(' ')};
+}
+const cell=v=>{if(v==null)return '';const s=String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+const toCSV=rows=>rows.map(r=>r.map(cell).join(',')).join('\n');
+function csvFor(k){
+  const P=collected.slice().sort((a,b)=>a.pid-b.pid);
+  if(k==='summary')return toCSV([['participant','set','seat','design','sync_wait_s','hazards_total','hazards_found','found_phone','total_phone','found_no_phone','total_no_phone','false_alarms','extra_taps','mean_rt_ms','mean_rt_phone_ms','mean_rt_no_phone_ms','msgs_shown','msgs_answered','mean_reply_rt_ms','times_left_page','status','stopped_at_s','problems']]
+    .concat(P.map(summaryRow)));
+  if(k==='hazards')return toCSV([['participant','set','hazard','hazard_time_s','phone_condition','msg_on_screen','msg_still_open_at_hazard','found','rt_ms']]
+    .concat([].concat.apply([],P.map(hazardRows))));
+  if(k==='messages')return toCSV([['participant','set','message','planned_s','shown_s','answered','reply','reply_rt_ms','not_shown_phone_away']]
+    .concat([].concat.apply([],P.map(messageRows))));
+  if(k==='log'){
+    const notes=loadJSON('htt-notes',{});
+    return toCSV([['participant','status','problems','researcher_notes']].concat(sessionLog().rows.map(r=>[r.pid,r.status,r.flags.join('; '),notes[r.pid]||''])));
+  }
+  return toCSV([['participant','set','tap_time_s']].concat([].concat.apply([],P.map(p=>p.taps.map(t=>[p.pid,p.schedule,t])))));
+}
+
+/* ---------------- events ---------------- */
+const act={
+  roleP(){S.practice=0;go('front')},
+  roleH(){go('host')},
+  home(){go('landing')},
+  mode(b){modeKey=b.dataset.m;render()},
+  last(){S.code=store.get('htt-last')||'';S.payload=loadJSON('htt-lastp',null);go('end')},
+  partial(){resumePartial()},
+  frontGo(){
+    const n=Number($('#pid').value);if(!Number.isInteger(n)||n<1||n>99||!$('#consent').checked)return;
+    S.pid=n;S.schedule=n%2?'A':'B';S.seat=$('#seat').value.trim().slice(0,6);go('try');
+  },
+  sample(){showNotice({from:'Sam',text:'This is a sample message.',replies:['Got it','Okay']},0,true)},
+  ready(){hideNotice();lockScreen();S.readyAt=performance.now();go('sync')},
+  copy(){copyText(S.code,$('#code'),$('#copyMsg'))},
+  send(){queueSend();sendNow()},
+  async loadSheet(){
+    const key=($('#sheetKey').value||'').trim();store.set('htt-key',key);
+    const m=$('#loadMsg');m.className='small muted';m.textContent='Loading...';
+    try{
+      const r=await fetch(SHEET_URL+(SHEET_URL.indexOf('?')<0?'?':'&')+'key='+encodeURIComponent(key));
+      const j=await r.json();
+      if(!j.ok){m.className='small err';m.textContent=j.error==='key'?'That researcher key is not right.':'The Sheet answered with a problem: '+j.error;return}
+      if(!j.codes.length){m.className='small muted';m.textContent='The Sheet has no results yet.';return}
+      const res=addCode(j.codes.join('\n'));render();
+      const m2=$('#loadMsg');if(m2){m2.className='small '+(res.ok?'ok':'err');m2.textContent='Loaded '+j.codes.length+' result'+(j.codes.length===1?'':'s')+' from the Sheet. '+res.msg}
+    }catch(e){m.className='small err';m.textContent='Could not reach the Sheet. Check the internet connection and the SHEET_URL setting.'}
+  },
+  clear(){store.del('htt-last');store.del('htt-lastp');store.del('htt-run');S.code='';S.payload=null;S.pid=null;go('landing')},
+  hostTab(b){S.hostTab=b.dataset.t;render()},
+  hostStart(){hostStart()},
+  hostStop(){hostStop()},
+  qrBig(){showBigQR()},
+  addCode(){const r=addCode($('#paste').value);render();const m=$('#addMsg');if(m){m.textContent=r.msg;m.className='small '+(r.ok?'ok':'err')}},
+  csv(b){const t=csvFor(b.dataset.k),ta=$('#csvOut');ta.value=t;copyText(t,ta,$('#csvMsg'))},
+  clearAll(){collected=[];saveCollected();store.del('htt-notes');store.del('htt-sessions');render()}
+};
+const down={
+  practiceTap(){S.practice++;const e=$('#pc');if(e)e.textContent=S.practice},
+  syncTap(){
+    const now=performance.now();S.tc=now;S.syncLag=(now-S.readyAt)/1000;
+    S.sid='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    S.taps=[];S.left=[];S.msgs=cfg().schedules[S.schedule].map((m,i)=>({i:i,t:m.t,shown:null,replied:null,reply:null,missed:false}));
+    S.lastSave=-1e9;saveRun(footTime(now));
+    go('run');S.timer=setInterval(tick,20);
+  },
+  hazardTap(b){
+    const now=performance.now();S.taps.push(r3(footTime(now)));saveRun(footTime(now));
+    b.classList.add('hit');setTimeout(()=>b.classList.remove('hit'),90);
+  },
+  reply(b){
+    const now=performance.now(),el=$('#notice');
+    if(el.dataset.sample){hideNotice();return}
+    const i=Number(el.dataset.idx),rec=S.msgs[i];
+    if(rec&&rec.replied==null){rec.replied=r3(footTime(now));rec.reply=b.textContent;rec.ri=Number(b.dataset.i)||0;saveRun(footTime(now))}
+    hideNotice();
+  }
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled&&act[b.dataset.act])act[b.dataset.act](b,e)});
+document.addEventListener('pointerdown',e=>{if(e.button>0)return;const b=e.target.closest('[data-down]');if(b&&down[b.dataset.down])down[b.dataset.down](b,e)});
+document.addEventListener('keydown',e=>{
+  if((e.key===' '||e.key==='Enter')&&e.target.matches&&e.target.matches('[data-down]')){e.preventDefault();down[e.target.dataset.down](e.target,e)}
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'&&S.screen==='run'&&S.tc!=null)S.left.push(r3(footTime(performance.now())));
+  if(document.visibilityState==='visible'&&(S.screen==='sync'||S.screen==='run'))lockScreen();
+});
+document.addEventListener('input',e=>{
+  if(e.target.classList&&e.target.classList.contains('note')){
+    const n=loadJSON('htt-notes',{}),v=e.target.value.slice(0,200);
+    if(v)n[e.target.dataset.pid]=v;else delete n[e.target.dataset.pid];
+    store.set('htt-notes',JSON.stringify(n));
+  }
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='expected'){const v=e.target.value.trim();if(v===(store.get('htt-expected')||''))return;store.set('htt-expected',v);render();return}
+  if(e.target.id!=='vf')return;
+  const f=e.target.files&&e.target.files[0];
+  if(videoURL){try{URL.revokeObjectURL(videoURL)}catch(x){}videoURL=null}
+  S.hostWarn='';
+  if(!f){S.hostInfo='';vid.removeAttribute('src');$('#vinfo').textContent='No file chosen. The placeholder road will play.';return}
+  S.fileName=f.name;videoURL=URL.createObjectURL(f);vid.src=videoURL;vid.load();
+  $('#vinfo').textContent='Loading '+f.name+' ...';$('#vinfo').className='small muted';
+  vid.onloadedmetadata=()=>{
+    const d=vid.duration,L=cfg().footageLength;
+    const msg=f.name+' is '+Math.round(d)+' s long.'+(Math.abs(d-L)>2?' The settings say '+L+' s. Update footageLength in the settings so phones finish at the right time.':' This matches the settings.');
+    S.hostInfo=msg;S.hostWarn=Math.abs(d-L)>2?msg:'';const v=$('#vinfo');if(v){v.textContent=msg;v.className='small '+(S.hostWarn?'err':'ok')}
+  };
+  vid.onerror=()=>{videoURL=null;S.hostWarn='This browser could not play that file. Try an .mp4 (H.264) file, or open this page from a saved copy on the projector laptop.';const v=$('#vinfo');if(v){v.textContent=S.hostWarn;v.className='small err'}};
+});
+
+render();
+if(SHEET_URL&&store.get('htt-outbox'))setTimeout(()=>{sendNow()},1500);   // a result that did not go through last time
+})();
+</script>
+</body></html>
